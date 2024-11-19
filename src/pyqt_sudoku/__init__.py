@@ -1,0 +1,1 @@
+"""PyQt-Sudoku package."""

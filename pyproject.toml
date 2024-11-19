@@ -1,21 +1,23 @@
 [project]
-name = "python-package-template"
+name = "pyqt-sudoku"
 authors = [
-    { name = "YOUR NAME HERE", email = "your_email@mail.com" },
+    { name = "Jaime Gonzalez Gomez", email = "jaimenicolas.gonzalezg@gmail.com" },
 ]
-description = "CHANGEME"
+description = "Sudoku application designed with PyQt6"
 dependencies = [
-    # add all dependencies of your package here
+    "PyQt6>=6.7.1",
+    "numpy>=2",
+    "py-sudoku",
 ]
 requires-python = ">=3.8"
 license = { text = "MIT license" }
 dynamic = ["readme", "version"]
 classifiers = [
-    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8+",
 ]
 
 [project.urls]
-Homepage = "http://github/USERNAME/REPO.git"
+Homepage = "https://github.com/Jtachan/PyQt-Sudoku.git"
 Documentation = "https://readthedocs.org"
 
 # you can add CLI tools which should be installed when installing the package
@@ -30,7 +32,7 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.dynamic]
-version = { attr = "pkg_name._version.__version__" }
+version = { attr = "pyqt_sudoku._version.__version__" }
 readme = { file = ["README.md"], content-type = "text/markdown" }
 
 [tool.setuptools.packages.find]

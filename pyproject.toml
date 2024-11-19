@@ -5,7 +5,7 @@ authors = [
 ]
 description = "Sudoku application designed with PyQt6"
 dependencies = [
-    "PyQt6>=6.7.1",
+    "PyQt6",
     "numpy>=2",
     "py-sudoku",
 ]

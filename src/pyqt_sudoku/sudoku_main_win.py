@@ -10,10 +10,13 @@ from PyQt6 import QtGui, QtWidgets, uic
 from PyQt6.QtCore import Qt
 from sudoku import Sudoku
 
+from pyqt_sudoku.solver import BacktrackingSolver
+
 # RGB Colors
 BLACK = (0, 0, 0)
 GREEN = (0, 150, 0)
 RED = (255, 0, 0)
+BLUE = (0, 0, 250)
 
 
 class SudokuMainWindow(QtWidgets.QMainWindow):
@@ -37,29 +40,93 @@ class SudokuMainWindow(QtWidgets.QMainWindow):
         super().__init__()
         uic.loadUi(SudokuMainWindow.UI_FILE_PATH, self)
 
-        self.new_game_button: QtWidgets.QPushButton = self.findChild(
-            QtWidgets.QPushButton, "newGameButton"
+        new_game_button = self.findChild(QtWidgets.QPushButton, "newGameButton")
+        hint_button = self.findChild(QtWidgets.QPushButton, "hintButton")
+
+        new_game_button.clicked.connect(self.create_new_game)
+        hint_button.clicked.connect(self.provide_a_hint)
+
+        self._difficulty_combobox: QtWidgets.QComboBox = self.findChild(
+            QtWidgets.QComboBox, "difficultyComboBox"
         )
-        self.new_game_button.clicked.connect(self.create_new_game)
 
         self.board = []
+        self.solved_board = []
         self._reset_board()
+
+    def get_cell(self, row_idx: int, col_idx: int) -> QtWidgets.QTextEdit:
+        """Obtaining a single cell."""
+        return self.findChild(QtWidgets.QTextEdit, f"cell_{row_idx}_{col_idx}")
 
     def create_new_game(self) -> None:
-        """Creates a new sudoku game."""
+        """Creates a new sudoku game.
+
+        When a new game is created:
+            - All the cells are cleared and set to read and write.
+            - A new sudoku puzzle (with only one solution) is created and the
+              solution is stored.
+            - The initial values are defined at each cell. These cells are set to
+              read only.
+        """
         self._reset_board()
 
-        puzzle = Sudoku(seed=random.randint(0, 500)).difficulty(0.3)
-        self.board = puzzle.board
+        if self._difficulty_combobox.currentText() == "Easy":
+            difficulty_level = 0.3
+        elif self._difficulty_combobox.currentText() == "Medium":
+            difficulty_level = 0.45
+        else:
+            difficulty_level = 0.6
+
+        while True:
+            puzzle = Sudoku(seed=random.randint(0, 500)).difficulty(difficulty_level)
+            if puzzle.has_multiple_solutions():
+                continue
+            self.board = puzzle.board
+            self.solved_board = puzzle.solve().board
+            break
 
         for row_idx, row_values in enumerate(self.board):
             for col_idx, cell_value in enumerate(row_values):
                 if cell_value is None:
                     continue
-                cell = self.findChild(QtWidgets.QTextEdit, f"cell_{row_idx}_{col_idx}")
                 self._set_cell_value(
-                    cell=cell, value=cell_value, read_only=True, rgb_color=GREEN
+                    cell=self.get_cell(row_idx, col_idx),
+                    value=cell_value,
+                    read_only=True,
+                    rgb_color=BLACK,
                 )
+
+        self.findChild(QtWidgets.QPushButton, "hintButton").setEnabled(True)
+
+    def provide_a_hint(self) -> None:
+        """Updates one cell of the current board to provide a hint to the user."""
+        row_indexes, col_indexes = list(range(9)), list(range(9))
+        random.shuffle(row_indexes)
+        random.shuffle(col_indexes)
+
+        for row_idx in row_indexes:
+            for col_idx in col_indexes:
+                board_value = self.board[row_idx][col_idx]
+                correct_value = self.solved_board[row_idx][col_idx]
+
+                if board_value == correct_value:
+                    continue
+
+                if board_value is None:
+                    # Cell is empty.
+                    new_cell_value = correct_value,
+                    color = GREEN
+                else:
+                    # Cell has incorrect value.
+                    new_cell_value = board_value
+                    color = RED
+
+                self._set_cell_value(
+                    cell=self.get_cell(row_idx, col_idx),
+                    value=new_cell_value,
+                    rgb_color=color,
+                )
+                return
 
     def _reset_board(self) -> None:
         """Resetting/Clearing the board.
@@ -77,7 +144,7 @@ class SudokuMainWindow(QtWidgets.QMainWindow):
         cell: QtWidgets.QTextEdit,
         value: Optional[int | str],
         read_only: bool = False,
-        rgb_color: tuple[int, int, int] = BLACK,
+        rgb_color: tuple[int, int, int] = BLUE,
     ) -> None:
         """Sets the value of a single cell.
 
@@ -103,16 +170,19 @@ class SudokuMainWindow(QtWidgets.QMainWindow):
             cell.setText(str(value))
         cell.setReadOnly(read_only)
         cell.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        # Obtain cell coordinates & updating the stored values.
+        if value is not None:
+            *_, row_idx, col_idx = cell.objectName().split("_")
+            self.board[int(row_idx)][int(col_idx)] = int(value)
+
         cell.textChanged.connect(lambda: self._validate_cell_text(cell))
 
     def _iterate_over_all_cells(self) -> Iterator[QtWidgets.QTextEdit]:
         """Iteration over all the cells at the board."""
         for row_idx in range(9):
             for col_idx in range(9):
-                cell: QtWidgets.QTextEdit = self.findChild(
-                    QtWidgets.QTextEdit, f"cell_{row_idx}_{col_idx}"
-                )
-                yield cell
+                yield self.get_cell(row_idx, col_idx)
 
     def _validate_cell_text(self, cell: QtWidgets.QTextEdit) -> None:
         """Validation of the text contained within a cell.

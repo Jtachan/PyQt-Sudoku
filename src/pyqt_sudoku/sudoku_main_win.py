@@ -10,8 +10,6 @@ from PyQt6 import QtGui, QtWidgets, uic
 from PyQt6.QtCore import Qt
 from sudoku import Sudoku
 
-from pyqt_sudoku.solver import BacktrackingSolver
-
 # RGB Colors
 BLACK = (0, 0, 0)
 GREEN = (0, 150, 0)

@@ -6,7 +6,7 @@ import numpy as np
 import numpy.typing as npt
 
 
-class UnsolvableSudoku(ValueError):
+class UnsolvableSudokuError(ValueError):
     """Error for when the sudoku cannot be solved."""
 
 
@@ -19,7 +19,7 @@ class BacktrackingSolver:
         width: int = 3,
         height: int = 3,
         verbose: bool = True,
-    ):
+    ) -> None:
         """Initializes the solver from the given board.
 
         Parameters
@@ -118,7 +118,7 @@ class BacktrackingSolver:
         if self._verbose:
             print(f"Initial state\n{self}")
         if not self._backtracking():
-            raise UnsolvableSudoku("The given sudoku doesn't have a solution")
+            raise UnsolvableSudokuError("The given sudoku doesn't have a solution.")
         if self._verbose:
             print(f"Solution\n{self}")
 

@@ -17,13 +17,9 @@ class SudokuApp(QApplication):
         super().__init__(sys.argv)
         self.main_window = SudokuMainWindow()
 
-    def exec(*args, **kwargs):
-        """Overrides the original method to also display the window."""
-        self.main_window.show()
-        super().exec(*args, **kwargs)
-
 
 def launch_app():
     """Function to launch the app."""
     app = SudokuApp()
+    app.main_window.show()
     app.exec()

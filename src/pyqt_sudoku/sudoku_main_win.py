@@ -42,9 +42,13 @@ class SudokuMainWindow(QtWidgets.QMainWindow):
 
         new_game_button = self.findChild(QtWidgets.QPushButton, "newGameButton")
         hint_button = self.findChild(QtWidgets.QPushButton, "hintButton")
+        check_numbers_button = self.findChild(
+            QtWidgets.QPushButton, "checkNumbersButton"
+        )
 
         new_game_button.clicked.connect(self.create_new_game)
         hint_button.clicked.connect(self.provide_a_hint)
+        check_numbers_button.clicked.connect(self.check_numbers_in_cells)
 
         self._difficulty_combobox: QtWidgets.QComboBox = self.findChild(
             QtWidgets.QComboBox, "difficultyComboBox"
@@ -128,6 +132,26 @@ class SudokuMainWindow(QtWidgets.QMainWindow):
                 )
                 return
 
+    def check_numbers_in_cells(self):
+        """Iterates over all the cells to paint"""
+        for cell in self._iterate_over_all_cells():
+            if cell.isReadOnly():
+                # Ignoring the cells that were set as the initial state.
+                continue
+
+            if cell.toPlainText() == "":
+                continue
+
+            cell_row, cell_col = [int(idx) for idx in cell.objectName().split("_")[-2:]]
+            board_number = self.board[cell_row][cell_col]
+            correct_number = self.solved_board[cell_row][cell_col]
+
+            self._set_cell_value(
+                cell=cell,
+                value=board_number,
+                rgb_color=RED if board_number != correct_number else GREEN,
+            )
+
     def _reset_board(self) -> None:
         """Resetting/Clearing the board.
 
@@ -207,8 +231,9 @@ class SudokuMainWindow(QtWidgets.QMainWindow):
             text = None
         self._set_cell_value(cell=cell, value=text)
 
-    def keyPressEvent(self, event: Optional[QtGui.QKeyEvent]):
-        """Introcing the functionality to close the app when ESC is pressed."""
+    # ruff: noqa: N802
+    def keyPressEvent(self, event: Optional[QtGui.QKeyEvent]) -> None:
+        """Introduced the functionality to close the app when ESC is pressed."""
         super().keyPressEvent(event)
         if event.key() == Qt.Key.Key_Escape:
             self.key_esc_pressed.emit()

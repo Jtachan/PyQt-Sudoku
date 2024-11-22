@@ -39,3 +39,19 @@ Once the repo is installed, run the following command at the terminal:
 ```bash
 QSudokuApp
 ```
+
+**New game**
+
+To start, click the 'New game' button.
+A new sudoku puzzle is then created based on the chosen difficulty.
+There are three difficulty settings: _Easy_, _Medium_ and _Hard_. 
+
+> Note: All generated puzzles have one single solution.
+
+**Hints**
+
+The 'Hint' button will give you some help when required.
+You can expect two possible outcome when the button is pressed:
+
+- A random cell will be filled with the correct number, represented in green.
+- One of your numbers is colored red, only if it is incorrect.

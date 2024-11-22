@@ -1,17 +1,6 @@
-![tests_badge](https://github.com/Jtachan/{REPO}/actions/workflows/unittests.yml/badge.svg)
-![docs_badge](https://github.com/Jtachan/{REPO}/actions/workflows/docs.yml/badge.svg)
-![release_badge](https://github.com/Jtachan/{REPO}/actions/workflows/release.yml/badge.svg)
+# PyQt-Sudoku
 
-# Python Repo Template
-
-Fill up with a repo description
-
-## 📖 Documentation
-
-You can find the documentation:
-
-- Within the [`/docs`](docs/index.md) folder
-- At the mkdocs generated page(https://jtachan.github.io/REPO_NAME/) (official documentation)
+This repo is a small project to display a Sudoku board created only with PyQt6 elements.
 
 ## 🐍 Python Setup
 
@@ -21,13 +10,32 @@ You can find the documentation:
 
 **Installation**
 
-The package is installable via pip:
-````commandline
-pip install pkg
+There is two possible installations:
+
+1. _Install via pip_ (recommended)
+
+For this method make use of 'pip' and 'git':
+
+````bash
+pip install git+https://github.com/Jtachan/PyQt-Sudoku.git
 ````
 
-The 'develop' branch can also be installed to work with unreleased features:
+2. _Install locally_
+
+First, clone the repo at your desired location:
 ````commandline
-pip install git+https://github.com/Jtachan/{REPO}.git@develop
+git clone https://github.com/Jtachan/PyQt-Sudoku.git
 ````
 
+Then, prepare your environment and install locally:
+```
+pip install .
+```
+
+## 🏃 Usage
+
+Once the repo is installed, run the following command at the terminal:
+
+```bash
+QSudokuApp
+```

@@ -20,9 +20,8 @@ classifiers = [
 Homepage = "https://github.com/Jtachan/PyQt-Sudoku.git"
 Documentation = "https://readthedocs.org"
 
-# you can add CLI tools which should be installed when installing the package
-# [project.scripts]
-# cli-command = "pkg_name.module:function"
+[project.scripts]
+QSudokuApp = "pyqt_sudoku.sudoku_app:launch_app"
 
 [project.optional-dependencies]
 dev = ["ruff", "pytest", "mkdocs-material"]

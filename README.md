@@ -55,3 +55,7 @@ You can expect two possible outcome when the button is pressed:
 
 - A random cell will be filled with the correct number, represented in green.
 - One of your numbers is colored red, only if it is incorrect.
+
+**Exit the game**
+
+To close the game, press the key 'ESC' or clock on the 'X' at the top right of the window.

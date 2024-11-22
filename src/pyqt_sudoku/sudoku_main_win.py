@@ -7,7 +7,7 @@ import random
 from typing import ClassVar, Iterator, Optional
 
 from PyQt6 import QtGui, QtWidgets, uic
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSignal
 from sudoku import Sudoku
 
 # RGB Colors
@@ -32,6 +32,8 @@ class SudokuMainWindow(QtWidgets.QMainWindow):
         "8",
         "9",
     }
+
+    key_esc_pressed = pyqtSignal()
 
     def __init__(self) -> None:
         """Constructor of SudokuMainWindow."""
@@ -168,6 +170,7 @@ class SudokuMainWindow(QtWidgets.QMainWindow):
             cell.setText(str(value))
         cell.setReadOnly(read_only)
         cell.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        cell.setFontPointSize(15)
 
         # Obtain cell coordinates & updating the stored values.
         if value is not None:
@@ -203,3 +206,9 @@ class SudokuMainWindow(QtWidgets.QMainWindow):
         if text not in self._VALID_CELL_VALUES:
             text = None
         self._set_cell_value(cell=cell, value=text)
+
+    def keyPressEvent(self, event: Optional[QtGui.QKeyEvent]):
+        """Introcing the functionality to close the app when ESC is pressed."""
+        super().keyPressEvent(event)
+        if event.key() == Qt.Key.Key_Escape:
+            self.key_esc_pressed.emit()

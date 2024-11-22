@@ -16,6 +16,7 @@ class SudokuApp(QApplication):
         """
         super().__init__(sys.argv)
         self.main_window = SudokuMainWindow()
+        self.main_window.key_esc_pressed.connect(self.quit)
 
 
 def launch_app():

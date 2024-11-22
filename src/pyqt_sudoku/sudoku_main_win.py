@@ -112,7 +112,7 @@ class SudokuMainWindow(QtWidgets.QMainWindow):
 
                 if board_value is None:
                     # Cell is empty.
-                    new_cell_value = correct_value,
+                    new_cell_value = correct_value
                     color = GREEN
                 else:
                     # Cell has incorrect value.

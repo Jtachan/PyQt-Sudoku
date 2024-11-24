@@ -6,8 +6,7 @@ import os.path
 import random
 from typing import ClassVar, Iterator, Optional
 
-from PyQt6 import QtGui, QtWidgets, uic
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6 import QtGui, QtWidgets, uic, QtCore
 from sudoku import Sudoku
 
 # RGB Colors
@@ -33,7 +32,7 @@ class SudokuMainWindow(QtWidgets.QMainWindow):
         "9",
     }
 
-    key_esc_pressed = pyqtSignal()
+    key_esc_pressed = QtCore.pyqtSignal()
 
     def __init__(self) -> None:
         """Constructor of SudokuMainWindow."""
@@ -41,18 +40,21 @@ class SudokuMainWindow(QtWidgets.QMainWindow):
         uic.loadUi(SudokuMainWindow.UI_FILE_PATH, self)
 
         new_game_button = self.findChild(QtWidgets.QPushButton, "newGameButton")
-        hint_button = self.findChild(QtWidgets.QPushButton, "hintButton")
-        check_numbers_button = self.findChild(
+        self.hint_button = self.findChild(QtWidgets.QPushButton, "hintButton")
+        self.check_numbers_button = self.findChild(
             QtWidgets.QPushButton, "checkNumbersButton"
+        )
+        self.difficulty_combobox: QtWidgets.QComboBox = self.findChild(
+            QtWidgets.QComboBox, "difficultyComboBox"
         )
 
         new_game_button.clicked.connect(self.create_new_game)
-        hint_button.clicked.connect(self.provide_a_hint)
-        check_numbers_button.clicked.connect(self.check_numbers_in_cells)
+        self.hint_button.clicked.connect(self.provide_a_hint)
+        self.check_numbers_button.clicked.connect(self.check_numbers_in_cells)
 
-        self._difficulty_combobox: QtWidgets.QComboBox = self.findChild(
-            QtWidgets.QComboBox, "difficultyComboBox"
-        )
+        self.timer = QtCore.QTimer(parent=self)
+        self.timer.timeout.connect(self.update_displayed_time)
+        self.seconds_on_game = 0
 
         self.board = []
         self.solved_board = []
@@ -61,6 +63,31 @@ class SudokuMainWindow(QtWidgets.QMainWindow):
     def get_cell(self, row_idx: int, col_idx: int) -> QtWidgets.QTextEdit:
         """Obtaining a single cell."""
         return self.findChild(QtWidgets.QTextEdit, f"cell_{row_idx}_{col_idx}")
+
+    def enable_hint_buttons(self, enabled: bool):
+        """Enabling/Disabling the buttons that provide hints to the user."""
+        for button_name in ("hintButton", "checkNumbersButton"):
+            self.findChild(QtWidgets.QPushButton, button_name).setEnabled(enabled)
+
+    def iterate_over_all_cells(self) -> Iterator[QtWidgets.QTextEdit]:
+        """Iteration over all the cells at the board."""
+        for row_idx in range(9):
+            for col_idx in range(9):
+                yield self.get_cell(row_idx, col_idx)
+
+    @property
+    def is_board_solved(self) -> bool:
+        """If the sudoku puzzle is solved"""
+        return self.board == self.solved_board
+
+    def update_displayed_time(self) -> None:
+        """Updating the time displayed at the status bar. The time is
+        updated by 1 second.
+        """
+        self.seconds_on_game += 1
+        minutes, seconds = divmod(self.seconds_on_game, 60)
+        hours, minutes = divmod(minutes, 60)
+        self.statusBar().showMessage(f"{hours:02}:{minutes:02}:{seconds:02}")
 
     def create_new_game(self) -> None:
         """Creates a new sudoku game.
@@ -74,9 +101,9 @@ class SudokuMainWindow(QtWidgets.QMainWindow):
         """
         self._reset_board()
 
-        if self._difficulty_combobox.currentText() == "Easy":
+        if self.difficulty_combobox.currentText() == "Easy":
             difficulty_level = 0.3
-        elif self._difficulty_combobox.currentText() == "Medium":
+        elif self.difficulty_combobox.currentText() == "Medium":
             difficulty_level = 0.45
         else:
             difficulty_level = 0.6
@@ -91,6 +118,8 @@ class SudokuMainWindow(QtWidgets.QMainWindow):
 
         for row_idx, row_values in enumerate(self.board):
             for col_idx, cell_value in enumerate(row_values):
+                cell = self.get_cell(row_idx, col_idx)
+                cell.setEnabled(True)
                 if cell_value is None:
                     continue
                 self._set_cell_value(
@@ -100,7 +129,10 @@ class SudokuMainWindow(QtWidgets.QMainWindow):
                     rgb_color=BLACK,
                 )
 
-        self.findChild(QtWidgets.QPushButton, "hintButton").setEnabled(True)
+        self.enable_hint_buttons(True)
+        self.timer.start(1000)
+        self.seconds_on_game = 0
+        self.statusBar().showMessage("00:00:00")
 
     def provide_a_hint(self) -> None:
         """Updates one cell of the current board to provide a hint to the user."""
@@ -134,7 +166,7 @@ class SudokuMainWindow(QtWidgets.QMainWindow):
 
     def check_numbers_in_cells(self):
         """Iterates over all the cells to paint"""
-        for cell in self._iterate_over_all_cells():
+        for cell in self.iterate_over_all_cells():
             if cell.isReadOnly():
                 # Ignoring the cells that were set as the initial state.
                 continue
@@ -160,8 +192,9 @@ class SudokuMainWindow(QtWidgets.QMainWindow):
             2. Every cell (QTextEdit) is cleared to an initial status.
         """
         self.board = [[None] * 9 for _ in range(9)]
-        for cell in self._iterate_over_all_cells():
+        for cell in self.iterate_over_all_cells():
             self._set_cell_value(cell=cell, value=None)
+            cell.setEnabled(False)
 
     def _set_cell_value(
         self,
@@ -193,7 +226,7 @@ class SudokuMainWindow(QtWidgets.QMainWindow):
         else:
             cell.setText(str(value))
         cell.setReadOnly(read_only)
-        cell.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        cell.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         cell.setFontPointSize(15)
 
         # Obtain cell coordinates & updating the stored values.
@@ -202,12 +235,6 @@ class SudokuMainWindow(QtWidgets.QMainWindow):
             self.board[int(row_idx)][int(col_idx)] = int(value)
 
         cell.textChanged.connect(lambda: self._validate_cell_text(cell))
-
-    def _iterate_over_all_cells(self) -> Iterator[QtWidgets.QTextEdit]:
-        """Iteration over all the cells at the board."""
-        for row_idx in range(9):
-            for col_idx in range(9):
-                yield self.get_cell(row_idx, col_idx)
 
     def _validate_cell_text(self, cell: QtWidgets.QTextEdit) -> None:
         """Validation of the text contained within a cell.
@@ -230,10 +257,14 @@ class SudokuMainWindow(QtWidgets.QMainWindow):
         if text not in self._VALID_CELL_VALUES:
             text = None
         self._set_cell_value(cell=cell, value=text)
+        
+    # ***********************
+    # Qt overloaded functions
+    # ***********************
 
     # ruff: noqa: N802
     def keyPressEvent(self, event: Optional[QtGui.QKeyEvent]) -> None:
         """Introduced the functionality to close the app when ESC is pressed."""
         super().keyPressEvent(event)
-        if event.key() == Qt.Key.Key_Escape:
+        if event.key() == QtCore.Qt.Key.Key_Escape:
             self.key_esc_pressed.emit()

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>600</width>
-    <height>688</height>
+    <width>604</width>
+    <height>654</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -1486,6 +1486,9 @@
           </item>
           <item>
            <widget class="QPushButton" name="checkNumbersButton">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="text">
              <string>Check numbers</string>
             </property>

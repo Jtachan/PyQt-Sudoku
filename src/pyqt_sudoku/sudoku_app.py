@@ -24,5 +24,5 @@ def launch_app() -> None:
     app.exec()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     launch_app()

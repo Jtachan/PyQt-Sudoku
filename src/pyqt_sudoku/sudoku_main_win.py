@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+import contextlib
 import os.path
 import random
 from typing import ClassVar, Iterator, Optional
 
-from PyQt6 import QtGui, QtWidgets, uic, QtCore
+from PyQt6 import QtCore, QtGui, QtWidgets, uic
 from sudoku import Sudoku
 
 # RGB Colors
@@ -64,7 +65,7 @@ class SudokuMainWindow(QtWidgets.QMainWindow):
         """Obtaining a single cell."""
         return self.findChild(QtWidgets.QTextEdit, f"cell_{row_idx}_{col_idx}")
 
-    def enable_hint_buttons(self, enabled: bool):
+    def enable_hint_buttons(self, enabled: bool) -> None:
         """Enabling/Disabling the buttons that provide hints to the user."""
         for button_name in ("hintButton", "checkNumbersButton"):
             self.findChild(QtWidgets.QPushButton, button_name).setEnabled(enabled)
@@ -77,13 +78,21 @@ class SudokuMainWindow(QtWidgets.QMainWindow):
 
     @property
     def is_board_solved(self) -> bool:
-        """If the sudoku puzzle is solved"""
+        """If the sudoku puzzle is solved."""
         return self.board == self.solved_board
 
+    def end_game(self) -> None:
+        """Routine for the end of the game (the puzzle is solved)."""
+        self.timer.stop()
+        for cell in self.iterate_over_all_cells():
+            cell.setReadOnly(True)
+        self.statusBar().showMessage(
+            f"Sudoku solved in {self.statusBar().currentMessage()}"
+        )
+        self.enable_hint_buttons(False)
+
     def update_displayed_time(self) -> None:
-        """Updating the time displayed at the status bar. The time is
-        updated by 1 second.
-        """
+        """Updating the time displayed at the status bar."""
         self.seconds_on_game += 1
         minutes, seconds = divmod(self.seconds_on_game, 60)
         hours, minutes = divmod(minutes, 60)
@@ -164,8 +173,8 @@ class SudokuMainWindow(QtWidgets.QMainWindow):
                 )
                 return
 
-    def check_numbers_in_cells(self):
-        """Iterates over all the cells to paint"""
+    def check_numbers_in_cells(self) -> None:
+        """Iterates over all the cells to paint."""
         for cell in self.iterate_over_all_cells():
             if cell.isReadOnly():
                 # Ignoring the cells that were set as the initial state.
@@ -214,11 +223,8 @@ class SudokuMainWindow(QtWidgets.QMainWindow):
         read_only : bool
             Boolean to define if the widget should be read only.
         """
-        try:
-            cell.disconnect()
-        except TypeError:
-            # No signals connected
-            pass
+        with contextlib.suppress(TypeError):
+            cell.disconnect()  # Raises TypeError if there is no connection.
 
         cell.setTextColor(QtGui.QColor.fromRgb(*rgb_color))
         if value is None:
@@ -234,7 +240,10 @@ class SudokuMainWindow(QtWidgets.QMainWindow):
             *_, row_idx, col_idx = cell.objectName().split("_")
             self.board[int(row_idx)][int(col_idx)] = int(value)
 
-        cell.textChanged.connect(lambda: self._validate_cell_text(cell))
+        if self.is_board_solved:
+            self.end_game()
+        else:
+            cell.textChanged.connect(lambda: self._validate_cell_text(cell))
 
     def _validate_cell_text(self, cell: QtWidgets.QTextEdit) -> None:
         """Validation of the text contained within a cell.
@@ -257,7 +266,7 @@ class SudokuMainWindow(QtWidgets.QMainWindow):
         if text not in self._VALID_CELL_VALUES:
             text = None
         self._set_cell_value(cell=cell, value=text)
-        
+
     # ***********************
     # Qt overloaded functions
     # ***********************
